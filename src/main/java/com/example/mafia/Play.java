@@ -13,12 +13,12 @@ public interface Play {
 
     @Gateway(requestChannel = "selectChannel")
     String selectCitizenName(List<String> citizens);
-
     @Gateway(requestChannel = "killChannel")
-    void kill(Game game);
-
+    String kill(Game game);
     @Gateway(requestChannel = "cureChannel")
-    void cure(Game game);
+    String cure(Game game);
     @Gateway(requestChannel = "distributeResultChannel")
     void distributeResult(String[] names);
+    @Gateway(requestChannel = "generateCitizensChannel")
+    List<Citizen> generateCitizens(List<String> names);
 }

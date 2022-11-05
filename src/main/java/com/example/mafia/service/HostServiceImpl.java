@@ -5,6 +5,8 @@ import com.example.mafia.domain.Citizen;
 import com.example.mafia.domain.Game;
 import com.example.mafia.domain.Role;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.integration.annotation.IntegrationComponentScan;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.SubscribableChannel;
@@ -15,55 +17,72 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 @IntegrationComponentScan
+@PropertySource("classpath:application.yml")
 public class HostServiceImpl implements HostService{
-
-    private final MafiaService mafiaService;
-    private final DoctorService doctorService;
     private final Play play;
-
-    private MessageHandler deadMessageHandler;
-
-    private MessageHandler savedMessageHandler;
-
+    private Game game;
     private final SubscribableChannel deadChannel;
 
     private final SubscribableChannel savedChannel;
 
+    @Value("${initial-names}")
+    private final List<String> initialNames;
+
     @Override
-    public void startPlay() throws InterruptedException {
+    public void startPlay(){
         System.out.println("*************************NEW_GAME******************************");
-        Game game = new Game(RandomServiceImpl.generateCitizens());
-        game.setNightCount(1);
-        deadMessageHandler = (m) -> {
-            List<Citizen> citizens = game.getCitizens();
-            citizens.remove(citizens.stream().filter(c -> c.getName().equals(m.getPayload())).findAny()
-                    .orElseThrow(() -> new RuntimeException("Dead was not found")));
-            System.err.println(m.getPayload() + " был убит этой ночью");
-        };
-        savedMessageHandler = (m) -> System.err.println( m.getPayload() + " чудом выжил этой ночью");
+        game = new Game(play.generateCitizens(initialNames));
+        deadChannel.subscribe(createDeadMessageHandler(game));
+        savedChannel.subscribe(createSavedMessageHandler(game));
         startNight(game);
     }
-    private void startNight(Game game) throws InterruptedException {
+    private void startNight(Game game){
         System.out.println("=============== Ночь " + game.getNightCount() + " ===============");
         System.out.println("Роли: " + game.getCitizens());
         System.out.println("Город засыпает...");
         System.out.println("Просыпается мафия. Мафия делает свой выбор. ");
-        String dead = mafiaService.kill(game);
+        String dead = play.kill(game);
         System.out.println("*выбор мафии пал на " + dead + "*");
         System.out.println("Мафия засыпает.") ;
         System.out.println("Просыпается докор. Доктор делает свой выбор. " + (game.getPreviousCured() == null ?
                 "" : "Напомню, прошлый выбор - " + game.getPreviousCured()));
-        String saved = doctorService.cure(game);
+        String saved = play.cure(game);
         System.out.println("*выбор доктора пал на " + saved + "*");
-        deadChannel.subscribe(deadMessageHandler);
-        savedChannel.subscribe(savedMessageHandler);
         play.distributeResult(new String[]{dead, saved});
         game.setNightCount(1 + game.getNightCount());
-        Thread.sleep(1000);
-        if(!isGameOver(game)) startNight(game);
+
     }
 
     private boolean isGameOver(Game game){
         return game.getCitizens().stream().noneMatch(c -> c.getRole().equals(Role.DOCTOR));
+    }
+    private MessageHandler createDeadMessageHandler(Game game){
+        return (m) -> {
+            List<Citizen> citizens = game.getCitizens();
+            citizens.remove(citizens.stream().filter(c -> c.getName().equals(m.getPayload())).findAny()
+                    .orElseThrow(() -> new RuntimeException("Dead was not found")));
+            System.err.println(m.getPayload() + " был убит этой ночью");
+            if (!isGameOver(game)) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                startNight(game);
+            }
+        };
+    }
+    private MessageHandler createSavedMessageHandler(Game game){
+        return (m) -> {
+            System.err.println(m.getPayload() + " чудом выжил этой ночью");
+            if (!isGameOver(game)) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                startNight(game);
+            }
+        };
     }
 }

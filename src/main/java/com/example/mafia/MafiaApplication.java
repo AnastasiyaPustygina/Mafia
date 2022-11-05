@@ -12,8 +12,10 @@ public class MafiaApplication {
 	public static void main(String[] args) throws InterruptedException {
 
 		ConfigurableApplicationContext run = SpringApplication.run(MafiaApplication.class, args);
-		run.getBean(HostService.class).startPlay();
-
+		while (true) {
+			run.getBean(HostService.class).startPlay();
+			Thread.sleep(10000);
+		}
 	}
 
 }

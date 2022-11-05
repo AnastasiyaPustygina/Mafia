@@ -1,0 +1,4 @@
+initial-names: Masha, Anya, Katya, Petya, Roma
+logging:
+  level:
+    root: WARN

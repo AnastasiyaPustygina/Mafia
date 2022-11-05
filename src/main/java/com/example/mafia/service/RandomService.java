@@ -9,15 +9,15 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
-public class RandomServiceImpl {
+public class RandomService {
 
     public static String selectCitizenName(List<String> citizens){
         int index = ThreadLocalRandom.current().nextInt(citizens.size());
         return citizens.get(index);
     }
-    public static List<Citizen> generateCitizens(){
+    public static List<Citizen> generateCitizens(List<String> initialNames){
         List<Citizen> citizens = new ArrayList<>();
-        List<String> names = new ArrayList<>(List.of("Masha", "Anya", "Katya", "Petya", "Roma"));
+        List<String> names = new ArrayList<>(initialNames);
         int index = ThreadLocalRandom.current().nextInt(names.size());
         citizens.add(Citizen.builder().name(names.get(index)).role(Role.MAFIA).build());
         names.remove(index);

@@ -1,38 +1,40 @@
 package com.example.mafia.config;
 
-import com.example.mafia.domain.Citizen;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.integration.channel.DirectChannel;
-import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
+import org.springframework.integration.dsl.MessageChannels;
 import org.springframework.messaging.*;
-
-import java.util.List;
 
 @Configuration
 public class MafiaConfig {
 
     @Bean
-    public IntegrationFlow selectCitizenName(){
+    public IntegrationFlow selectCitizenNameFlow(){
         return IntegrationFlows.from("selectChannel")
-                .handle("randomServiceImpl", "selectCitizenName").get();
+                .handle("randomService", "selectCitizenName").get();
     }
     @Bean
-    public IntegrationFlow kill(){
+    public IntegrationFlow killFlow(){
         return IntegrationFlows.from("killChannel")
                 .handle("mafiaServiceImpl", "kill").get();
     }
     @Bean
-    public IntegrationFlow cure(){
+    public IntegrationFlow cureFlow(){
         return IntegrationFlows.from("cureChannel")
                 .handle("doctorServiceImpl", "cure").get();
     }
 
+    @Bean
+    public IntegrationFlow generateCitizensFlow(){
+        return IntegrationFlows.from("generateCitizensChannel")
+                .handle("randomService", "generateCitizens").get();
+    }
+
     //Т.к. в дз был пункт про использование subFlow
     @Bean
-    public IntegrationFlow distributeResult(){
+    public IntegrationFlow distributeResultFlow(){
         return IntegrationFlows.from("distributeResultChannel").<String[], Boolean>route(
                 (arr) -> arr[0].equals(arr[1]), m -> m.subFlowMapping(true, sf -> sf.transform(arr ->
                         ((String[]) arr)[0]).channel(
@@ -42,16 +44,20 @@ public class MafiaConfig {
 
     @Bean
     public SubscribableChannel deadChannel(){
-        return new DirectChannel();
+        return MessageChannels.direct().get();
     }
     @Bean
     public SubscribableChannel savedChannel(){
-        return new DirectChannel();
+        return MessageChannels.direct().get();
+    }
+    @Bean
+    public PollableChannel generateCitizensChannel(){
+        return MessageChannels.queue(10).get();
     }
 
     @Bean
     public PollableChannel distributeResultChannel(){
-        return new QueueChannel();
+        return MessageChannels.queue(10).get();
     }
 
 }
