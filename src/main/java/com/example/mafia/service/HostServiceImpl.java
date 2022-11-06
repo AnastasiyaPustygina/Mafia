@@ -77,9 +77,7 @@ public class HostServiceImpl implements HostService {
             Citizen citizen = removeCitizenFromList(dead);
             System.err.print(dead + " был убит этой ночью. ");
             switch (citizen.getRole()){
-                case PEACEFUL_CITIZEN -> {
-                    System.err.println("Он был мирным жителем");
-                }
+                case PEACEFUL_CITIZEN -> System.err.println("Он был мирным жителем");
                 case DOCTOR -> {
                     game.setDoctorKilled(true);
                     System.err.println("Он был доктором");
@@ -104,9 +102,7 @@ public class HostServiceImpl implements HostService {
     }
 
     private MessageHandler createNegativeCheckResultMessageHandler() {
-        return (m) -> {
-            System.err.println("Коммисар ошибся.");
-        };
+        return (m) -> System.err.println("Коммисар ошибся.");
     }
 
     private void callStartNight() {
