@@ -18,13 +18,15 @@ public class RandomService {
     public static List<Citizen> generateCitizens(List<String> initialNames){
         List<Citizen> citizens = new ArrayList<>();
         List<String> names = new ArrayList<>(initialNames);
-        int index = ThreadLocalRandom.current().nextInt(names.size());
-        citizens.add(Citizen.builder().name(names.get(index)).role(Role.MAFIA).build());
-        names.remove(index);
-        index = ThreadLocalRandom.current().nextInt(names.size());
-        citizens.add(Citizen.builder().name(names.get(index)).role(Role.DOCTOR).build());
-        names.remove(index);
+        giveRole(citizens, names, Role.MAFIA);
+        giveRole(citizens, names, Role.DOCTOR);
+        giveRole(citizens, names, Role.COMMISSIONER);
         names.forEach(n -> citizens.add(Citizen.builder().name(n).role(Role.PEACEFUL_CITIZEN).build()));
         return citizens;
+    }
+    private static void giveRole(List<Citizen> citizens, List<String> names, Role role){
+        int index = ThreadLocalRandom.current().nextInt(names.size());
+        citizens.add(Citizen.builder().name(names.get(index)).role(role).build());
+        names.remove(index);
     }
 }

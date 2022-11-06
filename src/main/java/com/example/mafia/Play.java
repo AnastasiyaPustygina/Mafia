@@ -17,8 +17,8 @@ public interface Play {
     String kill(Game game);
     @Gateway(requestChannel = "cureChannel")
     String cure(Game game);
-    @Gateway(requestChannel = "distributeResultChannel")
-    void distributeResult(String[] names);
+    @Gateway(requestChannel = "checkChannel")
+    void check(Game game);
     @Gateway(requestChannel = "generateCitizensChannel")
     List<Citizen> generateCitizens(List<String> names);
 }

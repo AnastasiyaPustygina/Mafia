@@ -19,8 +19,7 @@ public class MafiaServiceImpl implements MafiaService{
     @Override
     public String kill(Game game) {
         List<Citizen> possibleDead = new ArrayList<>(game.getCitizens());
-        possibleDead.remove(possibleDead.stream().filter(c -> c.getRole().equals(Role.MAFIA)).findAny()
-                .orElseThrow(() -> new RuntimeException("mafia was not found")));
+        possibleDead = possibleDead.stream().filter(c -> !c.getRole().equals(Role.MAFIA)).toList();
         return play.selectCitizenName(possibleDead.stream().map(Citizen::getName).toList());
     }
 }

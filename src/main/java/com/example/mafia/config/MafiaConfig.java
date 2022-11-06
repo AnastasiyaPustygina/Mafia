@@ -2,6 +2,7 @@ package com.example.mafia.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.integration.annotation.Router;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.MessageChannels;
@@ -27,28 +28,28 @@ public class MafiaConfig {
     }
 
     @Bean
+    public IntegrationFlow checkFlow(){
+        return IntegrationFlows.from("checkChannel")
+                .handle("commissionerServiceImpl", "check")
+                .handle("hostServiceImpl", "handleCommissionCheck")
+                .handle("hostServiceImpl", "isMafia")
+                .route(this::route).get();
+    }
+
+    @Bean
     public IntegrationFlow generateCitizensFlow(){
         return IntegrationFlows.from("generateCitizensChannel")
                 .handle("randomService", "generateCitizens").get();
     }
 
-    //Т.к. в дз был пункт про использование subFlow
     @Bean
-    public IntegrationFlow distributeResultFlow(){
-        return IntegrationFlows.from("distributeResultChannel").<String[], Boolean>route(
-                (arr) -> arr[0].equals(arr[1]), m -> m.subFlowMapping(true, sf -> sf.transform(arr ->
-                        ((String[]) arr)[0]).channel(
-                        "savedChannel")).subFlowMapping(false, sf -> sf.transform(arr ->
-                        ((String[]) arr)[0]).channel("deadChannel"))).get();
-    }
-
-    @Bean
-    public SubscribableChannel deadChannel(){
-        return MessageChannels.direct().get();
+    public SubscribableChannel mafiaFoundChannel(){
+        return MessageChannels.publishSubscribe()
+                .minSubscribers(0).get();
     }
     @Bean
-    public SubscribableChannel savedChannel(){
-        return MessageChannels.direct().get();
+    public SubscribableChannel negativeCheckResultChannel(){
+        return MessageChannels.publishSubscribe().minSubscribers(0).get();
     }
     @Bean
     public PollableChannel generateCitizensChannel(){
@@ -56,8 +57,13 @@ public class MafiaConfig {
     }
 
     @Bean
-    public PollableChannel distributeResultChannel(){
+    public PollableChannel checkChannel(){
         return MessageChannels.queue(10).get();
+    }
+
+    @Router
+    public String route(Object payload){
+        return (Boolean) payload ? "mafiaFoundChannel" : "negativeCheckResultChannel";
     }
 
 }

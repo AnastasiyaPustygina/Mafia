@@ -20,8 +20,7 @@ public class DoctorServiceImpl implements DoctorService{
         List<String> possibleCured = new ArrayList<>(game.getCitizens().stream().map(Citizen::getName).toList());
         String previousCuredCitizen = game.getPreviousCured();
         if(previousCuredCitizen != null)
-            possibleCured.stream().filter(c -> c.equals(
-                    previousCuredCitizen)).findAny().ifPresent(possibleCured::remove);
+            possibleCured = possibleCured.stream().filter(c -> !c.equals(previousCuredCitizen)).toList();
         String curedCitizenName = play.selectCitizenName(possibleCured);
         game.setPreviousCured(curedCitizenName);
         return curedCitizenName;
