@@ -14,7 +14,6 @@ public class MafiaApplication {
 		ConfigurableApplicationContext run = SpringApplication.run(MafiaApplication.class, args);
 		while (true) {
 			run.getBean(HostService.class).startPlay();
-			Thread.sleep(10000);
 		}
 	}
 

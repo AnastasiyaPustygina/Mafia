@@ -36,6 +36,7 @@ public class HostServiceImpl implements HostService {
     public void startPlay() throws InterruptedException {
         game = new Game(play.generateCitizens(initialNames));
         System.out.println("*************************NEW_GAME******************************");
+        Thread.sleep(100);
         createAndSubscribeHandlers();
         startNight();
     }
