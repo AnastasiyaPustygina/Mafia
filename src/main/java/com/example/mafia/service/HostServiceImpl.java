@@ -58,7 +58,7 @@ public class HostServiceImpl implements HostService{
 
     }
 
-    private boolean isGameOver(Game game){
+    private boolean isGameOver(){
         return game.getCitizens().stream().noneMatch(c -> c.getRole().equals(Role.DOCTOR));
     }
     private MessageHandler createDeadMessageHandler(Game game){
@@ -83,7 +83,7 @@ public class HostServiceImpl implements HostService{
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        if (!isGameOver(game)) startNight();
+        if (!isGameOver()) startNight();
         else{
             deadChannel.unsubscribe(deadMessageHandler);
             savedChannel.unsubscribe(savedMessageHandler);
