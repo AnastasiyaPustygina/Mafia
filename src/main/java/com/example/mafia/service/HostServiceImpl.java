@@ -22,21 +22,26 @@ public class HostServiceImpl implements HostService{
     private final Play play;
     private Game game;
     private final SubscribableChannel deadChannel;
-
     private final SubscribableChannel savedChannel;
+
+    private MessageHandler deadMessageHandler;
+    private MessageHandler savedMessageHandler;
 
     @Value("${initial-names}")
     private final List<String> initialNames;
 
     @Override
-    public void startPlay(){
-        System.out.println("*************************NEW_GAME******************************");
+    public void startPlay() throws InterruptedException {
         game = new Game(play.generateCitizens(initialNames));
-        deadChannel.subscribe(createDeadMessageHandler(game));
-        savedChannel.subscribe(createSavedMessageHandler(game));
-        startNight(game);
+        Thread.sleep(100);
+        System.out.println("*************************NEW_GAME******************************");
+        deadMessageHandler = createDeadMessageHandler(game);
+        savedMessageHandler = createSavedMessageHandler();
+        deadChannel.subscribe(deadMessageHandler);
+        savedChannel.subscribe(savedMessageHandler);
+        startNight();
     }
-    private void startNight(Game game){
+    private void startNight(){
         System.out.println("=============== Ночь " + game.getNightCount() + " ===============");
         System.out.println("Роли: " + game.getCitizens());
         System.out.println("Город засыпает...");
@@ -61,28 +66,28 @@ public class HostServiceImpl implements HostService{
             List<Citizen> citizens = game.getCitizens();
             citizens.remove(citizens.stream().filter(c -> c.getName().equals(m.getPayload())).findAny()
                     .orElseThrow(() -> new RuntimeException("Dead was not found")));
+            game.setCitizens(citizens);
             System.err.println(m.getPayload() + " был убит этой ночью");
-            if (!isGameOver(game)) {
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                startNight(game);
-            }
+            callStartNight();
         };
     }
-    private MessageHandler createSavedMessageHandler(Game game){
+    private MessageHandler createSavedMessageHandler(){
         return (m) -> {
             System.err.println(m.getPayload() + " чудом выжил этой ночью");
-            if (!isGameOver(game)) {
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                startNight(game);
-            }
+            callStartNight();
         };
+    }
+    private void callStartNight(){
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (!isGameOver(game)) startNight();
+        else{
+            deadChannel.unsubscribe(deadMessageHandler);
+            savedChannel.unsubscribe(savedMessageHandler);
+            System.out.println("Доктор погиб. Игра окончена!");
+        }
     }
 }
